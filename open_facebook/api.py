@@ -97,7 +97,7 @@ import re
 try:
     # python 2 imports
     from urlparse import urlparse
-    from urllib2 import build_opener, HTTPError, URLError
+    from urllib2 import build_opener, HTTPError, URLError, HTTPSHandler
 except ImportError:
     # python 3 imports
     from urllib.error import HTTPError, URLError
@@ -164,7 +164,10 @@ class FacebookConnection(object):
             return response
 
         # nicely identify ourselves before sending the request
-        opener = build_opener()
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+        opener = build_opener(HTTPSHandler(context=ctx))
         opener.addheaders = [('User-agent', 'Open Facebook Python')]
 
         # get the statsd path to track response times with
@@ -185,10 +188,8 @@ class FacebookConnection(object):
                 start_statsd('facebook.%s' % statsd_path)
 
                 try:
-                    context = ssl._create_unverified_context()
                     response_file = opener.open(
-                        url, post_string, timeout=extended_timeout, 
-                        context=context)
+                        url, post_string, timeout=extended_timeout)
                     response = response_file.read().decode('utf8')
                 except (HTTPError,) as e:
                     response_file = e
