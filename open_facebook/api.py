@@ -185,12 +185,10 @@ class FacebookConnection(object):
                 start_statsd('facebook.%s' % statsd_path)
 
                 try:
-                    ctx = ssl.create_default_context()
-                    ctx.check_hostname = False
-                    ctx.verify_mode = ssl.CERT_NONE
+                    context = ssl._create_unverified_context()
                     response_file = opener.open(
                         url, post_string, timeout=extended_timeout, 
-                        context=ctx)
+                        context=context)
                     response = response_file.read().decode('utf8')
                 except (HTTPError,) as e:
                     response_file = e
